@@ -13,7 +13,10 @@ import (
 
 var db *gorm.DB
 
-// GetDB returns the global DB instance.
+type LoadDBOptions struct {
+	IsProd bool
+}
+
 func GetDB() *gorm.DB {
 	if db == nil {
 		panic("DB is not initialized")
@@ -22,8 +25,7 @@ func GetDB() *gorm.DB {
 	return db
 }
 
-// LoadDB loads the global DB instance.
-func LoadDB(engine string, dsn string) (err error) {
+func LoadDB(engine string, dsn string, opts ...*LoadDBOptions) (err error) {
 	var dialector gorm.Dialector
 	switch engine {
 	case "postgres":
@@ -36,12 +38,19 @@ func LoadDB(engine string, dsn string) (err error) {
 		panic(fmt.Errorf("unknown engine: %s", engine))
 	}
 
+	logLevel := logger.Info
+	if len(opts) > 0 {
+		if opts[0].IsProd {
+			logLevel = logger.Error
+		}
+	}
+
 	db, err = gorm.Open(dialector, &gorm.Config{
 		SkipDefaultTransaction: false,
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
-		Logger:               logger.Default.LogMode(logger.Info), // Print SQL queries
+		Logger:               logger.Default.LogMode(logLevel), // Print SQL queries
 		DisableAutomaticPing: false,
 		// DisableForeignKeyConstraintWhenMigrating: true,
 	})
