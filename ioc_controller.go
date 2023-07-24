@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-zoox/container"
 	"github.com/go-zoox/logger"
+	"github.com/go-zoox/zoox"
 )
 
 // Controller is the interface that wraps the basic methods.
@@ -13,6 +14,7 @@ type Controller interface {
 	//
 	Service() container.Container
 	//
+	Params(ctx *zoox.Context) *Params
 }
 
 // ControllerImpl is the implementation of the Controller interface.
@@ -46,4 +48,9 @@ func GetController[T any](id string) T {
 // Service returns the service container.
 func (c *ControllerImpl) Service() container.Container {
 	return service
+}
+
+// Params returns the params.
+func (c *ControllerImpl) Params(ctx *zoox.Context) *Params {
+	return NewParams(ctx)
 }
