@@ -1,4 +1,4 @@
-package ioc
+package gormx
 
 import (
 	"github.com/go-zoox/container"

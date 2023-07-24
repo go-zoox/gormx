@@ -13,10 +13,12 @@ import (
 
 var db *gorm.DB
 
+// LoadDBOptions is the options for LoadDB
 type LoadDBOptions struct {
 	IsProd bool
 }
 
+// GetDB returns the gorm.DB instance
 func GetDB() *gorm.DB {
 	if db == nil {
 		panic("DB is not initialized")
@@ -25,6 +27,7 @@ func GetDB() *gorm.DB {
 	return db
 }
 
+// LoadDB loads the database
 func LoadDB(engine string, dsn string, opts ...*LoadDBOptions) (err error) {
 	var dialector gorm.Dialector
 	switch engine {

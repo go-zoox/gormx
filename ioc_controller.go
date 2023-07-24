@@ -1,4 +1,4 @@
-package ioc
+package gormx
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"github.com/go-zoox/logger"
 )
 
+// Controller is the interface that wraps the basic methods.
 type Controller interface {
 	Name() string
 	//
@@ -14,9 +15,11 @@ type Controller interface {
 	//
 }
 
+// ControllerImpl is the implementation of the Controller interface.
 type ControllerImpl struct {
 }
 
+// RegisterController registers a controller.
 func RegisterController(name string, m Controller) {
 	if controller.Has(name) {
 		panic("controller already exists: " + name)
@@ -26,6 +29,7 @@ func RegisterController(name string, m Controller) {
 	controller.Register(name, m)
 }
 
+// GetController returns the controller by the given id.
 func GetController[T any](id string) T {
 	if !controller.Has(id) {
 		panic("controller not registered: " + id)
@@ -39,6 +43,7 @@ func GetController[T any](id string) T {
 	return s
 }
 
+// Service returns the service container.
 func (c *ControllerImpl) Service() container.Container {
 	return service
 }
