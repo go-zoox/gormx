@@ -33,6 +33,16 @@ func (w *OrderBy) Get(key string) (bool, bool) {
 	return false, false
 }
 
+// Del deletes a order by.
+func (w *OrderBy) Del(key string) {
+	for i, v := range *w {
+		if v.Key == key {
+			*w = append((*w)[:i], (*w)[i+1:]...)
+			break
+		}
+	}
+}
+
 // Debug prints the order bys.
 func (w *OrderBy) Debug() {
 	for _, v := range *w {
