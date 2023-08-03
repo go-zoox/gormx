@@ -55,6 +55,16 @@ func (w *Where) Get(key string) (interface{}, bool) {
 	return "", false
 }
 
+// Del deletes a where.
+func (w *Where) Del(key string) {
+	for i, v := range *w {
+		if v.Key == key {
+			*w = append((*w)[:i], (*w)[i+1:]...)
+			return
+		}
+	}
+}
+
 // Length returns the length of the wheres.
 func (w *Where) Length() int {
 	return len(*w)
