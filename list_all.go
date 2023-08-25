@@ -2,12 +2,18 @@ package gormx
 
 import "fmt"
 
-// ListAll lists all records.
-func ListAll[T any](where *Where, orderBy *OrderBy) (data []*T, err error) {
-	whereClause, whereValues := where.Build()
-
+// ListALL lists all records.
+func ListALL[T any](where *Where, orderBy *OrderBy) (data []*T, err error) {
 	countTx := GetDB().Model(new(T))
 	dataTx := GetDB()
+
+	if where != nil {
+		whereClause, whereValues := where.Build()
+		if whereClause != "" {
+			countTx = countTx.Where(whereClause, whereValues...)
+			dataTx = dataTx.Where(whereClause, whereValues...)
+		}
+	}
 
 	if orderBy != nil {
 		for _, order := range *orderBy {
@@ -21,10 +27,6 @@ func ListAll[T any](where *Where, orderBy *OrderBy) (data []*T, err error) {
 			countTx = countTx.Order(orderStr)
 			dataTx = dataTx.Order(orderStr)
 		}
-	}
-	if whereClause != "" {
-		countTx = countTx.Where(whereClause, whereValues...)
-		dataTx = dataTx.Where(whereClause, whereValues...)
 	}
 
 	err = dataTx.

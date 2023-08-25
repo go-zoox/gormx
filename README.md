@@ -25,7 +25,7 @@ func GetMany[T any](ids []uint) (data []*T, err error)
 func GetOrCreate[T any](where map[any]any, callback func(*T)) (*T, error)
 func Has[T any](where map[string]any) bool
 func List[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T, total int64, err error)
-func ListAll[T any](where *Where, orderBy *OrderBy) (data []*T, err error)
+func ListALL[T any](where *Where, orderBy *OrderBy) (data []*T, err error)
 func LoadDB(engine string, dsn string) (err error)
 func Retrieve[T any](id uint) (*T, error)
 func Save[T any](one *T) error
