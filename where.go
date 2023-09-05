@@ -18,7 +18,11 @@ type WhereOne struct {
 }
 
 // Where is the where.
-type Where []WhereOne
+type Where struct {
+	Items []WhereOne
+	//
+	FullTextSearchFields []string
+}
 
 // SetWhereOptions is the options for SetWhere.
 type SetWhereOptions struct {
@@ -44,7 +48,7 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 		fullTextSearchFields = opts[0].FullTextSearchFields
 	}
 
-	*w = append(*w, WhereOne{
+	w.Items = append(w.Items, WhereOne{
 		Key:     key,
 		Value:   value,
 		IsFuzzy: isFuzzy,
@@ -58,7 +62,7 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 
 // Get gets a where.
 func (w *Where) Get(key string) (interface{}, bool) {
-	for _, v := range *w {
+	for _, v := range w.Items {
 		if v.Key == key {
 			return v.Value, true
 		}
@@ -69,9 +73,9 @@ func (w *Where) Get(key string) (interface{}, bool) {
 
 // Del deletes a where.
 func (w *Where) Del(key string) {
-	for i, v := range *w {
+	for i, v := range w.Items {
 		if v.Key == key {
-			*w = append((*w)[:i], (*w)[i+1:]...)
+			w.Items = append(w.Items[:i], w.Items[i+1:]...)
 			return
 		}
 	}
@@ -79,23 +83,31 @@ func (w *Where) Del(key string) {
 
 // Length returns the length of the wheres.
 func (w *Where) Length() int {
-	return len(*w)
+	return len(w.Items)
 }
 
 // Build builds the wheres.
 func (w *Where) Build() (query string, args []interface{}, err error) {
 	whereClauses := []string{}
 	whereValues := []interface{}{}
-	for _, w := range *w {
+	for _, item := range w.Items {
+		// @TODO built-in keywords
+		if item.Key == "q" {
+			item.IsFullTextSearch = true
+			item.FullTextSearchFields = w.FullTextSearchFields
+		}
+
 		// @TODO full text search search keyword
-		if w.IsFullTextSearch {
-			if len(w.FullTextSearchFields) == 0 {
-				return "", nil, fmt.Errorf("FullTextSearchFields is required when IsFullTextSearch is true (key: %s)", w.Key)
+		if item.IsFullTextSearch {
+			// ignore if no fields
+			if len(item.FullTextSearchFields) == 0 {
+				// return "", nil, fmt.Errorf("FullTextSearchFields is required when IsFullTextSearch is true (key: %s)", item.Key)
+				continue
 			}
 
-			keyword, v := w.Value.(string)
+			keyword, v := item.Value.(string)
 			if !v {
-				return "", nil, fmt.Errorf("value must be string when IsFullTextSearch is true (key: %s)", w.Key)
+				return "", nil, fmt.Errorf("value must be string when IsFullTextSearch is true (key: %s)", item.Key)
 			}
 
 			// @TODO
@@ -106,7 +118,7 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 			qs := []string{}
 			args := []interface{}{}
 
-			fields := w.FullTextSearchFields
+			fields := item.FullTextSearchFields
 			for _, field := range fields {
 				qs = append(qs, fmt.Sprintf("%s ILike ?", field))
 				args = append(args, keywordFuzzy)
@@ -116,18 +128,18 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 			whereClauses = append(whereClauses, fmt.Sprintf("(%s)", query))
 			whereValues = append(whereValues, args...)
 		} else {
-			if w.IsFuzzy {
-				whereClauses = append(whereClauses, fmt.Sprintf("%s ILike ?", w.Key))
-				whereValues = append(whereValues, fmt.Sprintf("%%%s%%", w.Value))
-			} else if w.isNot {
-				whereClauses = append(whereClauses, fmt.Sprintf("%s != ?", w.Key))
-				whereValues = append(whereValues, w.Value)
-			} else if w.isIn {
-				whereClauses = append(whereClauses, fmt.Sprintf("%s in (?)", w.Key))
-				whereValues = append(whereValues, w.Value)
+			if item.IsFuzzy {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s ILike ?", item.Key))
+				whereValues = append(whereValues, fmt.Sprintf("%%%s%%", item.Value))
+			} else if item.isNot {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s != ?", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.isIn {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s in (?)", item.Key))
+				whereValues = append(whereValues, item.Value)
 			} else {
-				whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", w.Key))
-				whereValues = append(whereValues, w.Value)
+				whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", item.Key))
+				whereValues = append(whereValues, item.Value)
 			}
 		}
 	}
@@ -138,14 +150,14 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 
 // Debug prints the wheres.
 func (w *Where) Debug() {
-	for _, where := range *w {
+	for _, item := range w.Items {
 		var fuzzy string
-		if where.IsFuzzy {
+		if item.IsFuzzy {
 			fuzzy = "Fuzzy"
 		} else {
 			fuzzy = "Extract"
 		}
 
-		fmt.Printf("[where] %s %s %s\n", where.Key, where.Value, fuzzy)
+		fmt.Printf("[where] %s %s %s\n", item.Key, item.Value, fuzzy)
 	}
 }
