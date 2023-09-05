@@ -30,7 +30,7 @@ type SetWhereOptions struct {
 }
 
 // Set sets a where.
-func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) error {
+func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 	var isFuzzy bool
 	var isNot bool
 	var isIn bool
@@ -44,12 +44,6 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) err
 		fullTextSearchFields = opts[0].FullTextSearchFields
 	}
 
-	if isFullTextSearch {
-		if len(fullTextSearchFields) == 0 {
-			return fmt.Errorf("FullTextSearchFields is required when IsFullTextSearch is true (key: %s)", key)
-		}
-	}
-
 	*w = append(*w, WhereOne{
 		Key:     key,
 		Value:   value,
@@ -60,8 +54,6 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) err
 		IsFullTextSearch:     isFullTextSearch,
 		FullTextSearchFields: fullTextSearchFields,
 	})
-
-	return nil
 }
 
 // Get gets a where.
@@ -91,12 +83,16 @@ func (w *Where) Length() int {
 }
 
 // Build builds the wheres.
-func (w *Where) Build() (string, []interface{}) {
+func (w *Where) Build() (query string, args []interface{}, err error) {
 	whereClauses := []string{}
 	whereValues := []interface{}{}
 	for _, w := range *w {
 		// @TODO full text search search keyword
 		if w.IsFullTextSearch {
+			if len(w.FullTextSearchFields) == 0 {
+				return "", nil, fmt.Errorf("FullTextSearchFields is required when IsFullTextSearch is true (key: %s)", w.Key)
+			}
+
 			keywordExtract := strings.Replace(w.Key, ":*", "", 1)
 			keywordFuzzy := fmt.Sprintf("%%%s%%", keywordExtract)
 			qs := []string{}
@@ -129,7 +125,7 @@ func (w *Where) Build() (string, []interface{}) {
 	}
 	whereClause := strings.Join(whereClauses, " AND ")
 
-	return whereClause, whereValues
+	return whereClause, whereValues, nil
 }
 
 // Debug prints the wheres.
