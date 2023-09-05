@@ -93,7 +93,15 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 				return "", nil, fmt.Errorf("FullTextSearchFields is required when IsFullTextSearch is true (key: %s)", w.Key)
 			}
 
-			keywordExtract := strings.Replace(w.Key, ":*", "", 1)
+			keyword, v := w.Value.(string)
+			if !v {
+				return "", nil, fmt.Errorf("value must be string when IsFullTextSearch is true (key: %s)", w.Key)
+			}
+
+			// @TODO
+			keywordExtract := strings.Replace(keyword, ":*", "", 1)
+
+			//
 			keywordFuzzy := fmt.Sprintf("%%%s%%", keywordExtract)
 			qs := []string{}
 			args := []interface{}{}
