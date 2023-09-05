@@ -2,7 +2,11 @@ package gormx
 
 // Count counts records.
 func Count[T any](where *Where) (count int64, err error) {
-	whereClause, whereValues := where.Build()
+	whereClause, whereValues, errx := where.Build()
+	if errx != nil {
+		return 0, errx
+	}
+
 	countTx := GetDB().Model(new(T))
 
 	if whereClause != "" {

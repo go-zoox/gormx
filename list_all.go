@@ -8,7 +8,11 @@ func ListALL[T any](where *Where, orderBy *OrderBy) (data []*T, err error) {
 	dataTx := GetDB()
 
 	if where != nil {
-		whereClause, whereValues := where.Build()
+		whereClause, whereValues, errx := where.Build()
+		if errx != nil {
+			return nil, errx
+		}
+
 		if whereClause != "" {
 			countTx = countTx.Where(whereClause, whereValues...)
 			dataTx = dataTx.Where(whereClause, whereValues...)

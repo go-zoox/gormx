@@ -26,7 +26,10 @@ func List[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T
 	// }
 	// whereClause := strings.Join(whereClauses, " AND ")
 
-	whereClause, whereValues := where.Build()
+	whereClause, whereValues, errx := where.Build()
+	if errx != nil {
+		return nil, 0, errx
+	}
 
 	dataTx := GetDB().Model(new(T))
 
