@@ -28,8 +28,7 @@ func List[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T
 
 	whereClause, whereValues := where.Build()
 
-	countTx := GetDB().Model(new(T))
-	dataTx := GetDB()
+	dataTx := GetDB().Model(new(T))
 
 	if orderBy != nil {
 		for _, order := range *orderBy {
@@ -40,23 +39,15 @@ func List[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T
 			}
 
 			orderStr := fmt.Sprintf("%s %s", order.Key, orderMod)
-			countTx = countTx.Order(orderStr)
 			dataTx = dataTx.Order(orderStr)
 		}
 	}
 	if whereClause != "" {
-		countTx = countTx.Where(whereClause, whereValues...)
 		dataTx = dataTx.Where(whereClause, whereValues...)
 	}
 
-	err = countTx.
-		Count(&total).
-		Error
-	if err != nil {
-		return
-	}
-
 	err = dataTx.
+		Count(&total).
 		Offset(offset).
 		Limit(limit).
 		Find(&data).
