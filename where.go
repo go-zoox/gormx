@@ -102,7 +102,13 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 			// ignore if no fields
 			if len(item.FullTextSearchFields) == 0 {
 				// return "", nil, fmt.Errorf("FullTextSearchFields is required when IsFullTextSearch is true (key: %s)", item.Key)
-				continue
+				// continue
+				if len(w.FullTextSearchFields) == 0 {
+					// return "", nil, fmt.Errorf("FullTextSearchFields is required when IsFullTextSearch is true (key: %s)", item.Key)
+					continue
+				}
+
+				item.FullTextSearchFields = w.FullTextSearchFields
 			}
 
 			keyword, v := item.Value.(string)
