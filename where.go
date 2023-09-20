@@ -7,12 +7,26 @@ import (
 
 // WhereOne is the where one.
 type WhereOne struct {
-	Key     string
-	Value   interface{}
+	Key   string
+	Value interface{}
+
+	// IsEqual => =
+	IsEqual bool
+	// IsNotEqual => !=
+	IsNotEqual bool
+
+	// IsFuzzy => ILike
 	IsFuzzy bool
-	isNot   bool
-	isIn    bool
-	//
+
+	// IsIn => in (?)
+	IsIn bool
+	// IsNotIn => not in (?)
+	IsNotIn bool
+
+	// IsPlain => plain
+	IsPlain bool
+
+	// IsFullTextSearch => ILike (field1) OR ILike (field2) OR ...
 	IsFullTextSearch     bool
 	FullTextSearchFields []string
 }
@@ -26,38 +40,35 @@ type Where struct {
 
 // SetWhereOptions is the options for SetWhere.
 type SetWhereOptions struct {
+	IsEqual              bool
+	IsNotEqual           bool
 	IsFuzzy              bool
-	IsNot                bool
 	IsIn                 bool
+	IsNotIn              bool
+	IsPlain              bool
 	IsFullTextSearch     bool
 	FullTextSearchFields []string
 }
 
 // Set sets a where.
 func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
-	var isFuzzy bool
-	var isNot bool
-	var isIn bool
-	var isFullTextSearch bool
-	var fullTextSearchFields []string
-	if len(opts) > 0 && opts[0] != nil {
-		isFuzzy = opts[0].IsFuzzy
-		isNot = opts[0].IsNot
-		isIn = opts[0].IsIn
-		isFullTextSearch = opts[0].IsFullTextSearch
-		fullTextSearchFields = opts[0].FullTextSearchFields
+	item := WhereOne{
+		Key:   key,
+		Value: value,
 	}
 
-	w.Items = append(w.Items, WhereOne{
-		Key:     key,
-		Value:   value,
-		IsFuzzy: isFuzzy,
-		isNot:   isNot,
-		isIn:    isIn,
-		//
-		IsFullTextSearch:     isFullTextSearch,
-		FullTextSearchFields: fullTextSearchFields,
-	})
+	if len(opts) > 0 && opts[0] != nil {
+		item.IsFuzzy = opts[0].IsFuzzy
+		item.IsEqual = opts[0].IsEqual
+		item.IsNotEqual = opts[0].IsNotEqual
+		item.IsIn = opts[0].IsIn
+		item.IsNotIn = opts[0].IsNotIn
+		item.IsPlain = opts[0].IsPlain
+		item.IsFullTextSearch = opts[0].IsFullTextSearch
+		item.FullTextSearchFields = opts[0].FullTextSearchFields
+	}
+
+	w.Items = append(w.Items, item)
 }
 
 // Get gets a where.
@@ -137,11 +148,20 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 			if item.IsFuzzy {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s ILike ?", item.Key))
 				whereValues = append(whereValues, fmt.Sprintf("%%%s%%", item.Value))
-			} else if item.isNot {
+			} else if item.IsEqual {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.IsNotEqual {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s != ?", item.Key))
 				whereValues = append(whereValues, item.Value)
-			} else if item.isIn {
+			} else if item.IsIn {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s in (?)", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.IsNotIn {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s not in (?)", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.IsPlain {
+				whereClauses = append(whereClauses, item.Key)
 				whereValues = append(whereValues, item.Value)
 			} else {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", item.Key))
