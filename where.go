@@ -161,8 +161,12 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s not in (?)", item.Key))
 				whereValues = append(whereValues, item.Value)
 			} else if item.IsPlain {
-				whereClauses = append(whereClauses, item.Key)
-				whereValues = append(whereValues, item.Value)
+				whereClauses = append(whereClauses, fmt.Sprintf("(%s)", item.Key))
+				if v, ok := item.Value.([]any); ok {
+					whereValues = append(whereValues, v...)
+				} else {
+					whereValues = append(whereValues, item.Value)
+				}
 			} else {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", item.Key))
 				whereValues = append(whereValues, item.Value)
