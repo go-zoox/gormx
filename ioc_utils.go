@@ -95,12 +95,10 @@ func (c *Params) Where() *Where {
 		if vs, ok := value.(string); ok {
 			if strings.Contains(vs, ":") {
 				vs := strings.Split(vs, ":")
-				if len(vs) != 2 {
-					continue
-				}
-
-				if vs[1] == "*" {
-					where.Set(key, vs[0], &SetWhereOptions{IsFuzzy: true})
+				pattern := vs[len(vs)-1]
+				value := strings.Join(vs[0:len(vs)-1], ":")
+				if pattern == "*" {
+					where.Set(key, value, &SetWhereOptions{IsFuzzy: true})
 				}
 			} else {
 				where.Set(key, vs)
