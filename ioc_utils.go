@@ -99,6 +99,12 @@ func (c *Params) Where() *Where {
 				value := strings.Join(vs[0:len(vs)-1], ":")
 				if pattern == "*" {
 					where.Set(key, value, &SetWhereOptions{IsFuzzy: true})
+				} else if pattern == "!" {
+					where.Set(key, value, &SetWhereOptions{IsNotEqual: true})
+				} else if pattern == "in" {
+					where.Set(key, strings.Split(value, ","), &SetWhereOptions{IsIn: true})
+				} else if pattern == "!in" {
+					where.Set(key, strings.Split(value, ","), &SetWhereOptions{IsNotIn: true})
 				}
 			} else {
 				where.Set(key, vs)
