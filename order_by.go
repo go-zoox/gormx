@@ -76,3 +76,8 @@ func (w *OrderBy) Build() string {
 
 	return strings.Join(orders, ",")
 }
+
+// Reset resets the order bys.
+func (w *OrderBy) Reset() {
+	*w = []OrderByOne{}
+}

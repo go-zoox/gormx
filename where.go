@@ -191,3 +191,8 @@ func (w *Where) Debug() {
 		fmt.Printf("[where] %s %s %s\n", item.Key, item.Value, fuzzy)
 	}
 }
+
+// Reset resets the wheres.
+func (w *Where) Reset() {
+	w.Items = []WhereOne{}
+}
