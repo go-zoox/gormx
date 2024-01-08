@@ -8,14 +8,15 @@ func Migrate() {
 		panic("models must be register first")
 	}
 
-	db := GetDB()
+	// db := GetDB()
 
 	total := model.Length()
 	current := 0
 	logger.Infof("[gormx][migrate] models total: %d", total)
-	model.ForEach(func(id string, service any) {
+	model.ForEach(func(id string, s any) {
 		current++
-		logger.Infof("[gormx][migrate] migrate: %d/%d ...", current, total)
-		db.AutoMigrate(service)
+		logger.Infof("[gormx][migrate][%d/%d] migrate: %s ...", current, total, s.(Model).ModelName())
+
+		db.AutoMigrate(s)
 	})
 }

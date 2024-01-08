@@ -24,10 +24,10 @@ func Register(name string, m Model) {
 	})
 
 	if model.Has(name) {
-		panic("model already exists: " + name)
+		panic(fmt.Sprintf("[gormx][register] model(%s) already exists: ", name))
 	}
 
-	logger.Infof("[cms][model] register: %s", name)
+	logger.Infof("[gormx][register] model: %s", name)
 	model.Register(name, m)
 }
 
