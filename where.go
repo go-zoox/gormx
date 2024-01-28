@@ -57,6 +57,11 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 		Value: value,
 	}
 
+	itemX, ok := w.Get(key)
+	if ok {
+		item = itemX.(WhereOne)
+	}
+
 	if len(opts) > 0 && opts[0] != nil {
 		item.IsFuzzy = opts[0].IsFuzzy
 		item.IsEqual = opts[0].IsEqual
