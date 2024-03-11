@@ -1,9 +1,12 @@
 package ddl
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-zoox/gormx"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // CreateUser creates a user.
@@ -35,8 +38,17 @@ func CreateUser(engine, dsn, database, username, password string) (err error) {
 		if err != nil {
 			return
 		}
+	case "mongodb":
+		err = executeMongoDB(dsn, func(ctx context.Context, client *mongo.Client) error {
+			r := client.Database("admin").RunCommand(ctx, bson.D{
+				{Key: "createUser", Value: username},
+				{Key: "pwd", Value: password},
+				{Key: "roles", Value: []bson.M{{"role": "readWrite", "db": database}}},
+			})
+			return r.Err()
+		})
 	default:
-		err = fmt.Errorf("unsupported engine: %s", gormx.GetEngine())
+		err = fmt.Errorf("unsupported engine: %s", engine)
 	}
 
 	return
@@ -44,7 +56,21 @@ func CreateUser(engine, dsn, database, username, password string) (err error) {
 
 // DeleteUser deletes a user.
 func DeleteUser(engine, dsn, username string) (err error) {
-	err = execute(engine, dsn, fmt.Sprintf(`DROP USER '%s'`, username))
+	switch engine {
+	case "postgres":
+		err = execute(engine, dsn, fmt.Sprintf(`DROP USER '%s'`, username))
+	case "mysql":
+		err = execute(engine, dsn, fmt.Sprintf(`DROP USER '%s'@'%%'`, username))
+	case "mongodb":
+		err = executeMongoDB(dsn, func(ctx context.Context, client *mongo.Client) error {
+			r := client.Database("admin").RunCommand(ctx, bson.D{
+				{Key: "dropUser", Value: username},
+			})
+			return r.Err()
+		})
+	default:
+		err = fmt.Errorf("unsupported engine: %s", engine)
+	}
 	return
 }
 
