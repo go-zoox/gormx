@@ -7,33 +7,40 @@ import (
 )
 
 // CreateDatabase creates a database.
-func CreateDatabase(name string) (err error) {
-	switch gormx.GetEngine() {
+func CreateDatabase(engine, dsn, name string) (err error) {
+	switch engine {
 	case "postgres":
-		_, err = gormx.SQL[any](`CREATE DATABASE ?`, name)
+		err = execute(engine, dsn, fmt.Sprintf("CREATE DATABASE %s", name))
 	case "mysql":
-		_, err = gormx.SQL[any](`CREATE DATABASE ? DEFAULT CHARSET 'utf8'`, name)
+		err = execute(engine, dsn, fmt.Sprintf("CREATE DATABASE %s DEFAULT CHARSET 'utf8'", name))
 	default:
-		err = fmt.Errorf("unsupported engine: %s", gormx.GetEngine())
+		err = fmt.Errorf("unsupported engine: %s, available engines: postgres, mysql", engine)
 	}
 	return
 }
 
 // DeleteDatabase deletes a database.
-func DeleteDatabase(name string) (err error) {
-	_, err = gormx.SQL[any](`DROP DATABASE ?`, name)
+func DeleteDatabase(engine, dsn, name string) (err error) {
+	switch engine {
+	case "postgres":
+		err = execute(engine, dsn, fmt.Sprintf("DROP DATABASE %s", name))
+	case "mysql":
+		err = execute(engine, dsn, fmt.Sprintf("DROP DATABASE %s", name))
+	default:
+		err = fmt.Errorf("unsupported engine: %s, available engines: postgres, mysql", engine)
+	}
 	return
 }
 
 // AddUserToDatabase adds a user to a database.
-func AddUserToDatabase(username, database string) (err error) {
-	switch gormx.GetEngine() {
+func AddUserToDatabase(engine, username, database string) (err error) {
+	switch engine {
 	case "postgres":
 		_, err = gormx.SQL[any](`GRANT ALL PRIVILEGES ON ? TO ?`, database, username)
 	case "mysql":
 		_, err = gormx.SQL[any](`GRANT ALL PRIVILEGES ON ?.* TO ? @'%'; FLUSH PRIVILEGES;`, database, username)
 	default:
-		err = fmt.Errorf("unsupported engine: %s", gormx.GetEngine())
+		err = fmt.Errorf("unsupported engine: %s, available engines: postgres, mysql", engine)
 	}
 
 	return

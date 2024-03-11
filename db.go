@@ -46,6 +46,16 @@ func GetDSN() string {
 
 // LoadDB loads the database
 func LoadDB(engine string, dsn string, opts ...func(*LoadDBOptions)) (err error) {
+	db, err = Connect(engine, dsn, opts...)
+	if err != nil {
+		return fmt.Errorf("connecting database failed: %s", err.Error())
+	}
+
+	return nil
+}
+
+// Connect connects the database
+func Connect(engine string, dsn string, opts ...func(*LoadDBOptions)) (db *gorm.DB, err error) {
 	opt := &LoadDBOptions{}
 	for _, o := range opts {
 		o(opt)
@@ -60,7 +70,7 @@ func LoadDB(engine string, dsn string, opts ...func(*LoadDBOptions)) (err error)
 	case "sqlite":
 		dialector = sqlite.Open(dsn)
 	default:
-		return fmt.Errorf("unknown engine: %s", engine)
+		return nil, fmt.Errorf("unknown engine: %s", engine)
 	}
 
 	metadataEngine = engine
@@ -83,8 +93,8 @@ func LoadDB(engine string, dsn string, opts ...func(*LoadDBOptions)) (err error)
 		DryRun: opt.DryRun,
 	})
 	if err != nil {
-		return fmt.Errorf("connecting database failed: %s", err.Error())
+		return nil, fmt.Errorf("connecting database failed: %s", err.Error())
 	}
 
-	return nil
+	return db, nil
 }

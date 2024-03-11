@@ -7,12 +7,34 @@ import (
 )
 
 // CreateUser creates a user.
-func CreateUser(username, password string) (err error) {
-	switch gormx.GetEngine() {
+func CreateUser(engine, dsn, database, username, password string) (err error) {
+	switch engine {
 	case "postgres":
-		_, err = gormx.SQL[any](`CREATE USER ? WITH ENCRYPTED PASSWORD ?`, username, password)
+		err = execute(engine, dsn, fmt.Sprintf(`CREATE USER %s WITH ENCRYPTED PASSWORD '%s'`, username, password))
+		if err != nil {
+			return
+		}
+
+		err = execute(engine, dsn, fmt.Sprintf(`GRANT ALL PRIVILEGES ON DATABASE %s TO %s`, database, username))
+		if err != nil {
+			return
+		}
 	case "mysql":
-		_, err = gormx.SQL[any](`CREATE USER ? @'%' IDENTIFIED BY ?`, username, password)
+		// _, err = gormx.SQL[any](`CREATE USER ? @'%' IDENTIFIED BY ?`, username, password)
+		err = execute(engine, dsn, fmt.Sprintf(`CREATE USER '%s'@'%%' IDENTIFIED BY '%s'`, username, password))
+		if err != nil {
+			return
+		}
+
+		err = execute(engine, dsn, fmt.Sprintf(`GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';`, database, username))
+		if err != nil {
+			return
+		}
+
+		err = execute(engine, dsn, `flush privileges;`)
+		if err != nil {
+			return
+		}
 	default:
 		err = fmt.Errorf("unsupported engine: %s", gormx.GetEngine())
 	}
@@ -21,8 +43,8 @@ func CreateUser(username, password string) (err error) {
 }
 
 // DeleteUser deletes a user.
-func DeleteUser(username string) (err error) {
-	_, err = gormx.SQL[any](`DROP USER ?`, username)
+func DeleteUser(engine, dsn, username string) (err error) {
+	err = execute(engine, dsn, fmt.Sprintf(`DROP USER '%s'`, username))
 	return
 }
 
