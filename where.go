@@ -52,14 +52,22 @@ type SetWhereOptions struct {
 
 // Set sets a where.
 func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
+	isNew := true
 	item := WhereOne{
 		Key:   key,
 		Value: value,
 	}
 
-	itemX, ok := w.Get(key)
+	// if exists, update
+	_, ok := w.Get(key)
 	if ok {
-		item = itemX.(WhereOne)
+		isNew = false
+		for _, x := range w.Items {
+			if x.Key == key {
+				item = x
+				break
+			}
+		}
 	}
 
 	if len(opts) > 0 && opts[0] != nil {
@@ -73,7 +81,9 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 		item.FullTextSearchFields = opts[0].FullTextSearchFields
 	}
 
-	w.Items = append(w.Items, item)
+	if isNew {
+		w.Items = append(w.Items, item)
+	}
 }
 
 // Get gets a where.
