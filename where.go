@@ -50,7 +50,7 @@ type SetWhereOptions struct {
 	FullTextSearchFields []string
 }
 
-// Set sets a where.
+// Set sets a where, if exists, update.
 func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 	isNew := true
 	item := WhereOne{
@@ -70,20 +70,49 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 		}
 	}
 
-	if len(opts) > 0 && opts[0] != nil {
-		item.IsFuzzy = opts[0].IsFuzzy
-		item.IsEqual = opts[0].IsEqual
-		item.IsNotEqual = opts[0].IsNotEqual
-		item.IsIn = opts[0].IsIn
-		item.IsNotIn = opts[0].IsNotIn
-		item.IsPlain = opts[0].IsPlain
-		item.IsFullTextSearch = opts[0].IsFullTextSearch
-		item.FullTextSearchFields = opts[0].FullTextSearchFields
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+
+		item.IsFuzzy = opt.IsFuzzy
+		item.IsEqual = opt.IsEqual
+		item.IsNotEqual = opt.IsNotEqual
+		item.IsIn = opt.IsIn
+		item.IsNotIn = opt.IsNotIn
+		item.IsPlain = opt.IsPlain
+		item.IsFullTextSearch = opt.IsFullTextSearch
+		item.FullTextSearchFields = opt.FullTextSearchFields
 	}
 
 	if isNew {
 		w.Items = append(w.Items, item)
 	}
+}
+
+// Add adds a where.
+func (w *Where) Add(key string, value interface{}, opts ...*SetWhereOptions) {
+	item := WhereOne{
+		Key:   key,
+		Value: value,
+	}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+
+		item.IsFuzzy = opt.IsFuzzy
+		item.IsEqual = opt.IsEqual
+		item.IsNotEqual = opt.IsNotEqual
+		item.IsIn = opt.IsIn
+		item.IsNotIn = opt.IsNotIn
+		item.IsPlain = opt.IsPlain
+		item.IsFullTextSearch = opt.IsFullTextSearch
+		item.FullTextSearchFields = opt.FullTextSearchFields
+	}
+
+	w.Items = append(w.Items, item)
 }
 
 // Get gets a where.
