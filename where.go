@@ -52,45 +52,17 @@ type SetWhereOptions struct {
 
 // Set sets a where, if exists, update.
 func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
-	isNew := true
-	item := WhereOne{
-		Key:   key,
-		Value: value,
-	}
+	// @TODO cannot real update
 
-	// if exists, update
 	_, ok := w.Get(key)
 	if ok {
-		isNew = false
-		for _, x := range w.Items {
-			if x.Key == key {
-				item = x
-				break
-			}
-		}
+		w.Del(key)
 	}
 
-	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
-
-		item.IsFuzzy = opt.IsFuzzy
-		item.IsEqual = opt.IsEqual
-		item.IsNotEqual = opt.IsNotEqual
-		item.IsIn = opt.IsIn
-		item.IsNotIn = opt.IsNotIn
-		item.IsPlain = opt.IsPlain
-		item.IsFullTextSearch = opt.IsFullTextSearch
-		item.FullTextSearchFields = opt.FullTextSearchFields
-	}
-
-	if isNew {
-		w.Items = append(w.Items, item)
-	}
+	w.Add(key, value, opts...)
 }
 
-// Add adds a where.
+// Add adds a where, if exists, append.
 func (w *Where) Add(key string, value interface{}, opts ...*SetWhereOptions) {
 	item := WhereOne{
 		Key:   key,
