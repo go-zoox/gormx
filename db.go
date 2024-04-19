@@ -34,6 +34,11 @@ func GetDB() *gorm.DB {
 	return db
 }
 
+// SetDB sets the global gorm.DB instance
+func SetDB(d *gorm.DB) {
+	db = d
+}
+
 // GetEngine returns the database engine
 func GetEngine() string {
 	return metadataEngine
