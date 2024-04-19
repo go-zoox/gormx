@@ -36,6 +36,8 @@ type Where struct {
 	Items []WhereOne
 	//
 	FullTextSearchFields []string
+	//
+	OR []*Where
 }
 
 // SetWhereOptions is the options for SetWhere.
@@ -191,6 +193,26 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 	}
 	whereClause := strings.Join(whereClauses, " AND ")
 
+	// apply or
+	if len(w.OR) >= 0 {
+		whereClauseOr := []string{
+			whereClause,
+		}
+		whereValuesOr := whereValues
+		for _, wi := range w.OR {
+			wiWhereClause, wiWhereValues, err := wi.Build()
+			if err != nil {
+				return "", nil, err
+			}
+
+			whereClauseOr = append(whereClauseOr, wiWhereClause)
+			whereValuesOr = append(whereValuesOr, wiWhereValues...)
+		}
+
+		whereClause = strings.Join(whereClauseOr, " OR ")
+		whereValues = whereValuesOr
+	}
+
 	return whereClause, whereValues, nil
 }
 
@@ -211,4 +233,10 @@ func (w *Where) Debug() {
 // Reset resets the wheres.
 func (w *Where) Reset() {
 	w.Items = []WhereOne{}
+}
+
+// Or creates or.
+func (w *Where) Or(where *Where) *Where {
+	w.OR = append(w.OR, where)
+	return w
 }
