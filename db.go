@@ -34,7 +34,8 @@ func GetDB() *gorm.DB {
 	return db
 }
 
-// SetDB sets the global gorm.DB instance
+// SetDB sets the global gorm.DB instance.
+// This is useful for old projects that already use gorm.
 func SetDB(d *gorm.DB) {
 	db = d
 }
