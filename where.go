@@ -196,7 +196,7 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 	// apply or
 	if len(w.OR) >= 0 {
 		whereClauseOr := []string{
-			whereClause,
+			fmt.Sprintf("(%s)", whereClause),
 		}
 		whereValuesOr := whereValues
 		for _, wi := range w.OR {
@@ -205,7 +205,7 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 				return "", nil, err
 			}
 
-			whereClauseOr = append(whereClauseOr, wiWhereClause)
+			whereClauseOr = append(whereClauseOr, fmt.Sprintf("(%s)", wiWhereClause))
 			whereValuesOr = append(whereValuesOr, wiWhereValues...)
 		}
 
