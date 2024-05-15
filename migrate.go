@@ -21,7 +21,14 @@ func Migrate() {
 		current++
 		logger.Infof("[gormx][migrate][%d/%d] migrate: %s ...", current, total, s.(Model).ModelName())
 
-		return db.AutoMigrate(s)
+		// @TODO
+		// bug:  ERROR: constraint "uni_v1_devops_dict_uuid" of relation "v1_devops_dict" does not exist (SQLSTATE 42704)
+		// issue: https://github.com/go-gorm/gorm/issues/7010
+		//
+		// return db.AutoMigrate(s)
+
+		db.AutoMigrate(s)
+		return nil
 	})
 	if err != nil {
 		panic(fmt.Errorf("failed to migrate: %s", err))
