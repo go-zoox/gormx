@@ -3,7 +3,7 @@ module github.com/go-zoox/gormx
 go 1.18
 
 require (
-	github.com/go-zoox/ioc v1.0.1
+	github.com/go-zoox/ioc v1.0.2
 	github.com/go-zoox/logger v1.4.4
 	github.com/go-zoox/zoox v1.10.15
 	go.mongodb.org/mongo-driver v1.14.0

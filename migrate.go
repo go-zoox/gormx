@@ -1,6 +1,10 @@
 package gormx
 
-import "github.com/go-zoox/logger"
+import (
+	"fmt"
+
+	"github.com/go-zoox/logger"
+)
 
 // Migrate migrates the models to the database.
 func Migrate() {
@@ -13,10 +17,13 @@ func Migrate() {
 	total := model.Length()
 	current := 0
 	logger.Infof("[gormx][migrate] models total: %d", total)
-	model.ForEach(func(id string, s any) {
+	err := model.ForEach(func(id string, s any) error {
 		current++
 		logger.Infof("[gormx][migrate][%d/%d] migrate: %s ...", current, total, s.(Model).ModelName())
 
-		db.AutoMigrate(s)
+		return db.AutoMigrate(s)
 	})
+	if err != nil {
+		panic(fmt.Errorf("failed to migrate: %s", err))
+	}
 }
