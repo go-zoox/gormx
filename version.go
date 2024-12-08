@@ -1,4 +1,4 @@
 package gormx
 
 // Version is the version of this package.
-var Version = "1.5.6"
+var Version = "1.5.7"
