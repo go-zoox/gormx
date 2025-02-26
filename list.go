@@ -1,7 +1,5 @@
 package gormx
 
-import "fmt"
-
 // List lists records.
 func List[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T, total int64, err error) {
 	offset := int((page - 1) * pageSize)
@@ -35,14 +33,7 @@ func List[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T
 
 	if orderBy != nil {
 		for _, order := range *orderBy {
-			// fmt.Println("order by:", order.Key, order.IsDESC)
-			orderMod := "ASC"
-			if order.IsDESC {
-				orderMod = "DESC"
-			}
-
-			orderStr := fmt.Sprintf("%s %s", order.Key, orderMod)
-			dataTx = dataTx.Order(orderStr)
+			dataTx = dataTx.Order(order.Clause())
 		}
 	}
 	if whereClause != "" {

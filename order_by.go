@@ -9,6 +9,28 @@ import (
 type OrderByOne struct {
 	Key    string
 	IsDESC bool
+
+	//
+	clause string
+}
+
+// String returns the string of the order by.
+func (w *OrderByOne) String() string {
+	return w.Clause()
+}
+
+// Clause returns the clause of the order by.
+func (w *OrderByOne) Clause() string {
+	if w.clause == "" {
+		orderMod := "ASC"
+		if w.IsDESC {
+			orderMod = "DESC"
+		}
+
+		w.clause = fmt.Sprintf("%s %s", w.Key, orderMod)
+	}
+
+	return w.clause
 }
 
 // OrderBy is a list of order bys.
@@ -31,6 +53,21 @@ func (w *OrderBy) Get(key string) (bool, bool) {
 	}
 
 	return false, false
+}
+
+// Add adds a order by.
+func (w *OrderBy) Add(key string, IsDESC bool) {
+	*w = append(*w, OrderByOne{
+		Key:    key,
+		IsDESC: IsDESC,
+	})
+}
+
+// AddClause adds a order by clause.
+func (w *OrderBy) AddClause(clause string) {
+	*w = append(*w, OrderByOne{
+		clause: clause,
+	})
 }
 
 // Del deletes a order by.
@@ -62,16 +99,22 @@ func (w *OrderBy) Length() int {
 	return len(*w)
 }
 
+// GetClause gets the order by clause.
+func (w *OrderBy) GetClause(key string) string {
+	for _, v := range *w {
+		if v.Key == key {
+			return v.clause
+		}
+	}
+
+	return ""
+}
+
 // Build builds the order bys.
 func (w *OrderBy) Build() string {
 	orders := []string{}
 	for _, order := range *w {
-		orderMod := "ASC"
-		if order.IsDESC {
-			orderMod = "DESC"
-		}
-
-		orders = append(orders, fmt.Sprintf("%s %s", order.Key, orderMod))
+		orders = append(orders, order.Clause())
 	}
 
 	return strings.Join(orders, ",")
