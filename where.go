@@ -5,6 +5,38 @@ import (
 	"strings"
 )
 
+// WhereCondition is a type constraint for where conditions.
+// It can be either map[any]any or *Where.
+type WhereCondition interface {
+	map[any]any | *Where
+}
+
+// ToWhere converts a where condition to *Where.
+// If the input is already *Where, return it directly.
+// If the input is map[any]any, convert it to *Where.
+func ToWhere[T WhereCondition](condition T) *Where {
+	var result any = condition
+
+	// If it's already *Where, return directly
+	if w, ok := result.(*Where); ok {
+		return w
+	}
+
+	// If it's map[any]any, convert to *Where
+	if m, ok := result.(map[any]any); ok {
+		where := NewWhere()
+		for k, v := range m {
+			if key, ok := k.(string); ok {
+				where.Set(key, v)
+			}
+		}
+		return where
+	}
+
+	// Should not reach here due to type constraint
+	return nil
+}
+
 // WhereOne is the where one.
 type WhereOne struct {
 	Key   string

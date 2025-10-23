@@ -1,13 +1,14 @@
 package gormx
 
 // Delete deletes the record from database by the given conditions.
-func Delete[T any](where map[any]any) (err error) {
-	var f T
-	err = GetDB().First(&f, where).Error
+// Supports both map[any]any and *Where as where condition.
+func Delete[T any, W WhereCondition](where W) (err error) {
+	// Use FindOne with generic where condition
+	f, err := FindOne[T](where)
 	if err != nil {
-		return
+		return err
 	}
 
-	err = GetDB().Delete(&f).Error
+	err = GetDB().Delete(f).Error
 	return
 }

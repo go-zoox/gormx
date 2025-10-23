@@ -4,6 +4,40 @@ All notable changes to the GORMX project will be documented in this file.
 
 ## [Unreleased] - 2025-10-23
 
+### Added - Generic Where Support
+
+#### Enhanced Type Safety with Go Generics
+- **Breaking Change**: Updated all methods with `where map[any]any` parameter to support generic `WhereCondition` type
+- Now supports both `map[any]any` and `*Where` types for maximum flexibility
+- Provides compile-time type safety through Go 1.18+ type constraints
+
+#### Updated Methods
+All the following methods now have generic where parameter `W WhereCondition`:
+- `FindOne[T any, W WhereCondition](where W) (*T, error)`
+- `FindOneAndDelete[T any, W WhereCondition](where W) (*T, error)`
+- `FindOneAndUpdate[T any, W WhereCondition](where W, callback func(*T)) (*T, error)`
+- `FindOneOrCreate[T any, W WhereCondition](where W, callback func(*T)) (*T, error)`
+- `GetOrCreate[T any, W WhereCondition](where W, callback func(*T)) (*T, error)`
+- `Delete[T any, W WhereCondition](where W) (err error)`
+- `Exists[T any, W WhereCondition](where W) (bool, error)`
+
+#### New Types
+- Added `WhereCondition` interface type constraint: `map[any]any | *Where`
+- Added `ToWhere[T WhereCondition](condition T) *Where` helper function for type conversion
+
+#### Benefits
+- **Backward Compatible**: Existing code using `map[any]any` continues to work
+- **Type Safe**: Compiler checks prevent passing invalid types
+- **Flexible**: Choose simple `map[any]any` or powerful `*Where` based on needs
+- **Performance**: Optimized to use native GORM map support for simple queries
+
+#### Files
+- `where.go` - Added `WhereCondition` type constraint and `ToWhere` conversion function
+- `find_one.go`, `delete.go`, `exists.go`, `find_one_and_delete.go`, `find_one_and_update.go`, `find_one_or_create.go`, `get_or_create.go` - Updated to use generic where parameter
+- `WHERE_GENERIC.md` - Complete documentation on generic where support
+- `examples/where_generic/main.go` - Basic usage examples
+- `examples/where_generic_all/main.go` - Comprehensive examples for all updated methods
+
 ### Added - Aggregate Query Support
 
 #### New Aggregate Functions

@@ -7,22 +7,22 @@ package gormx // import "github.com/go-zoox/gormx"
 
 var Version = "1.0.0"
 func Create[T any](one *T) (*T, error)
-func Delete[T any](where map[any]any) (err error)
+func Delete[T any, W WhereCondition](where W) (err error)
 func DeleteOneByID[T any](id uint) (err error)
-func Exists[T any](where map[any]any) (bool, error)
+func Exists[T any, W WhereCondition](where W) (bool, error)
 func Find[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T, total int64, err error)
 func FindAll[T any](where *Where, orderBy *OrderBy) (data []*T, err error)
 func FindByID[T any](id uint) (*T, error)
-func FindOne[T any](where map[any]any) (*T, error)
-func FindOneAndDelete[T any](where map[any]any) (*T, error)
-func FindOneAndUpdate[T any](where map[any]any, callback func(*T)) (*T, error)
+func FindOne[T any, W WhereCondition](where W) (*T, error)
+func FindOneAndDelete[T any, W WhereCondition](where W) (*T, error)
+func FindOneAndUpdate[T any, W WhereCondition](where W, callback func(*T)) (*T, error)
 func FindOneByIDAndDelete[T any](id uint) (*T, error)
 func FindOneByIDAndUpdate[T any](id uint, callback func(*T)) (*T, error)
 func FindOneByIDOrCreate[T any](id uint, callback func(*T)) (*T, error)
-func FindOneOrCreate[T any](where map[any]any, callback func(*T)) (*T, error)
+func FindOneOrCreate[T any, W WhereCondition](where W, callback func(*T)) (*T, error)
 func GetDB() *gorm.DB
 func GetMany[T any](ids []uint) (data []*T, err error)
-func GetOrCreate[T any](where map[any]any, callback func(*T)) (*T, error)
+func GetOrCreate[T any, W WhereCondition](where W, callback func(*T)) (*T, error)
 func Has[T any](where map[string]any) bool
 func List[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T, total int64, err error)
 func ListALL[T any](where *Where, orderBy *OrderBy) (data []*T, err error)
@@ -41,6 +41,7 @@ func GroupBy[T any](fields []string, where *Where, aggregates []string) ([]Group
 func Aggregate[T any](field string, where *Where, operations []string) (map[string]interface{}, error)
 
 // Types
+type WhereCondition interface{ map[any]any | *Where }  // Generic type constraint for where conditions
 type OrderBy []OrderByOne
 type OrderByOne struct{ ... }
 type Page struct{ ... }
@@ -50,6 +51,62 @@ type WhereOne struct{ ... }
 type GroupByResult struct{ ... }
 type AggregateResult struct{ ... }
 ```
+
+## Generic Where Support
+
+GORMX now supports both `map[any]any` and `*Where` types for where conditions using Go generics. This provides flexibility while maintaining type safety.
+
+### Using map[any]any (Simple Queries)
+
+```go
+// Find one
+user, err := gormx.FindOne[User](map[any]any{"name": "Alice"})
+
+// Check existence
+exists, err := gormx.Exists[User](map[any]any{"email": "alice@example.com"})
+
+// Delete
+err := gormx.Delete[User](map[any]any{"id": 1})
+```
+
+### Using *Where (Complex Queries)
+
+```go
+// Fuzzy search
+where := gormx.NewWhere()
+where.Set("name", "Alice", &gormx.SetWhereOptions{IsFuzzy: true})
+user, err := gormx.FindOne[User](where)
+
+// NOT equal
+where := gormx.NewWhere()
+where.Set("age", 25, &gormx.SetWhereOptions{IsNotEqual: true})
+users, err := gormx.FindOne[User](where)
+
+// IN query
+where := gormx.NewWhere()
+where.Set("status", []string{"active", "pending"}, &gormx.SetWhereOptions{IsIn: true})
+user, err := gormx.FindOne[User](where)
+
+// Multiple conditions
+where := gormx.NewWhere()
+where.Set("category", "electronics")
+where.Set("price", 1000, &gormx.SetWhereOptions{IsNotEqual: true})
+where.Set("name", "Pro", &gormx.SetWhereOptions{IsFuzzy: true})
+product, err := gormx.FindOne[Product](where)
+```
+
+### Supported Methods
+
+The following methods support both `map[any]any` and `*Where`:
+- `FindOne[T, W]`
+- `FindOneAndDelete[T, W]`
+- `FindOneAndUpdate[T, W]`
+- `FindOneOrCreate[T, W]`
+- `GetOrCreate[T, W]`
+- `Delete[T, W]`
+- `Exists[T, W]`
+
+See [WHERE_GENERIC.md](WHERE_GENERIC.md) for complete documentation.
 
 ## Aggregate Query Examples
 

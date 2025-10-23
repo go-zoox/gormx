@@ -3,13 +3,38 @@ package gormx
 import "fmt"
 
 // FindOne finds one record.
-func FindOne[T any](where map[any]any) (*T, error) {
+// Supports both map[any]any and *Where as where condition.
+func FindOne[T any, W WhereCondition](where W) (*T, error) {
 	var f T
-	if err := GetDB().First(&f, where).Error; err != nil {
-		return nil, err
+
+	// Convert to *Where for unified processing
+	w := ToWhere(where)
+
+	// If it's a simple map (has no complex conditions), use GORM's native map support
+	if len(w.Items) > 0 {
+		// Check if all items are simple equality conditions
+		simpleMap := make(map[any]any)
+		isSimple := true
+
+		for _, item := range w.Items {
+			if item.IsFuzzy || item.IsIn || item.IsNotIn || item.IsPlain || item.IsFullTextSearch || item.IsNotEqual {
+				isSimple = false
+				break
+			}
+			simpleMap[item.Key] = item.Value
+		}
+
+		if isSimple {
+			// Use simple map query
+			if err := GetDB().First(&f, simpleMap).Error; err != nil {
+				return nil, err
+			}
+			return &f, nil
+		}
 	}
 
-	return &f, nil
+	// Use complex conditions
+	return FindOneWithComplexConditions[T](w, nil)
 }
 
 // FindOneWithComplexConditions finds one record.

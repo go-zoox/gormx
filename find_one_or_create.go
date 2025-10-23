@@ -7,7 +7,8 @@ import (
 )
 
 // FindOneOrCreate find one or create one.
-func FindOneOrCreate[T any](where map[any]any, callback func(*T)) (*T, error) {
+// Supports both map[any]any and *Where as where condition.
+func FindOneOrCreate[T any, W WhereCondition](where W, callback func(*T)) (*T, error) {
 	f, err := FindOne[T](where)
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {

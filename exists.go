@@ -7,7 +7,8 @@ import (
 )
 
 // Exists returns true if the record exists.
-func Exists[T any](where map[any]any) (bool, error) {
+// Supports both map[any]any and *Where as where condition.
+func Exists[T any, W WhereCondition](where W) (bool, error) {
 	_, err := FindOne[T](where)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

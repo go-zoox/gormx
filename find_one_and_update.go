@@ -1,13 +1,14 @@
 package gormx
 
 // FindOneAndUpdate finds one and update it.
-func FindOneAndUpdate[T any](where map[any]any, callback func(*T)) (*T, error) {
-	var f T
-	if err := GetDB().First(&f, where).Error; err != nil {
+// Supports both map[any]any and *Where as where condition.
+func FindOneAndUpdate[T any, W WhereCondition](where W, callback func(*T)) (*T, error) {
+	f, err := FindOne[T](where)
+	if err != nil {
 		return nil, err
 	}
 
-	callback(&f)
+	callback(f)
 
-	return &f, nil
+	return f, nil
 }
