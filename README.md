@@ -98,3 +98,44 @@ where.Set("price", 100, &gormx.SetWhereOptions{IsFuzzy: true})
 // Sum with conditions
 total, err := gormx.Sum[Product](where, "price")
 ```
+
+## Chain Query Builder
+
+GORMX provides a fluent chain query builder for constructing complex queries:
+
+```go
+// Simple query
+products, err := gormx.NewQuery[Product]().
+    Where("category", "Electronics").
+    OrderByDesc("price").
+    Limit(10).
+    Find()
+
+// Complex query with multiple conditions
+products, total, err := gormx.NewQuery[Product]().
+    WhereIn("category", []string{"Electronics", "Books"}).
+    Where("in_stock", true).
+    WhereLike("name", "Pro").
+    OrderByDesc("price").
+    OrderByAsc("name").
+    Paginate(1, 20)
+
+// Aggregate queries
+totalValue, err := gormx.NewQuery[Product]().
+    Where("category", "Electronics").
+    Sum("price")
+
+avgPrice, err := gormx.NewQuery[Product]().
+    Where("in_stock", true).
+    Avg("price")
+
+// Transactions
+err := gormx.NewQuery[Product]().Transaction(func(tx *gormx.QueryBuilder[Product]) error {
+    if err := tx.Create(&product); err != nil {
+        return err
+    }
+    return tx.Where("quantity", 0).Update(updates)
+})
+```
+
+See [CHAIN.md](CHAIN.md) for complete documentation on the chain query builder.
