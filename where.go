@@ -50,6 +50,11 @@ type SetWhereOptions struct {
 	FullTextSearchFields []string
 }
 
+// NewWhere returns a new where.
+func NewWhere() *Where {
+	return &Where{}
+}
+
 // Set sets a where, if exists, update.
 func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 	// @TODO cannot real update

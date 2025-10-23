@@ -36,6 +36,11 @@ func (w *OrderByOne) Clause() string {
 // OrderBy is a list of order bys.
 type OrderBy []OrderByOne
 
+// NewOrderBy returns a new order by.
+func NewOrderBy() *OrderBy {
+	return &OrderBy{}
+}
+
 // Set sets a order by.
 func (w *OrderBy) Set(key string, IsDESC bool) {
 	*w = append(*w, OrderByOne{
