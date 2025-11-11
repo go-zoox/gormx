@@ -94,17 +94,66 @@ func (c *Params) Where() *Where {
 	for key, value := range whereObject.Iterator() {
 		if vs, ok := value.(string); ok {
 			if strings.Contains(vs, ":") {
-				vs := strings.Split(vs, ":")
-				pattern := vs[len(vs)-1]
-				value := strings.Join(vs[0:len(vs)-1], ":")
+				parts := strings.Split(vs, ":")
+				pattern := parts[len(parts)-1]
+
 				if pattern == "*" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
 					where.Set(key, value, &SetWhereOptions{IsFuzzy: true})
 				} else if pattern == "!" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
 					where.Set(key, value, &SetWhereOptions{IsNotEqual: true})
 				} else if pattern == "in" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
 					where.Set(key, strings.Split(value, ","), &SetWhereOptions{IsIn: true})
 				} else if pattern == "!in" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
 					where.Set(key, strings.Split(value, ","), &SetWhereOptions{IsNotIn: true})
+				} else if pattern == "range" || pattern == "range[]" || pattern == "range()" || pattern == "range[)" || pattern == "range(]" {
+					// Format: startValue,endValue:range_mode
+					// Examples:
+					//   18,65:range       -> [A, B] (default, closed)
+					//   18,65:range[]     -> [A, B] (closed)
+					//   18,65:range()     -> (A, B) (open)
+					//   18,65:range[)     -> [A, B) (left closed)
+					//   18,65:range(]     -> (A, B] (right closed)
+
+					var rangeMode RangeMode = RangeModeClosed // default
+
+					// Determine range mode based on pattern
+					switch pattern {
+					case "range", "range[]":
+						rangeMode = RangeModeClosed
+					case "range()":
+						rangeMode = RangeModeOpen
+					case "range[)":
+						rangeMode = RangeModeLeftClosed
+					case "range(]":
+						rangeMode = RangeModeRightClosed
+					}
+
+					valueStr := strings.Join(parts[0:len(parts)-1], ":")
+					rangeValues := strings.Split(valueStr, ",")
+					if len(rangeValues) >= 2 {
+						where.Set(key, rangeValues, &SetWhereOptions{
+							IsRange:   true,
+							RangeMode: rangeMode,
+						})
+					}
+				} else if pattern == ">" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
+					where.Set(key, value, &SetWhereOptions{IsGreaterThan: true})
+				} else if pattern == "<" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
+					where.Set(key, value, &SetWhereOptions{IsLessThan: true})
+				} else if pattern == ">=" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
+					where.Set(key, value, &SetWhereOptions{IsGreaterOrEqualThan: true})
+				} else if pattern == "<=" {
+					value := strings.Join(parts[0:len(parts)-1], ":")
+					where.Set(key, value, &SetWhereOptions{IsLessOrEqualThan: true})
+				} else {
+					where.Set(key, vs)
 				}
 			} else {
 				where.Set(key, vs)

@@ -5,6 +5,20 @@ import (
 	"strings"
 )
 
+// RangeMode defines the type of range query
+type RangeMode string
+
+const (
+	// RangeModeClosed represents [A, B] - both inclusive (default)
+	RangeModeClosed RangeMode = "closed"
+	// RangeModeOpen represents (A, B) - both exclusive
+	RangeModeOpen RangeMode = "open"
+	// RangeModeLeftClosed represents [A, B) - left inclusive, right exclusive
+	RangeModeLeftClosed RangeMode = "left_closed"
+	// RangeModeRightClosed represents (A, B] - left exclusive, right inclusive
+	RangeModeRightClosed RangeMode = "right_closed"
+)
+
 // WhereCondition is a type constraint for where conditions.
 // It can be either map[any]any or *Where.
 type WhereCondition interface {
@@ -58,6 +72,21 @@ type WhereOne struct {
 	// IsPlain => plain
 	IsPlain bool
 
+	// IsRange => BETWEEN ? AND ? (or other range modes)
+	IsRange    bool
+	rangeStart interface{}
+	rangeEnd   interface{}
+	rangeMode  RangeMode // Range mode: closed, open, left_closed, right_closed
+
+	// IsGreaterThan => >
+	IsGreaterThan bool
+	// IsLessThan => <
+	IsLessThan bool
+	// IsGreaterOrEqualThan => >=
+	IsGreaterOrEqualThan bool
+	// IsLessOrEqualThan => <=
+	IsLessOrEqualThan bool
+
 	// IsFullTextSearch => ILike (field1) OR ILike (field2) OR ...
 	IsFullTextSearch     bool
 	FullTextSearchFields []string
@@ -78,6 +107,12 @@ type SetWhereOptions struct {
 	IsIn                 bool
 	IsNotIn              bool
 	IsPlain              bool
+	IsRange              bool
+	RangeMode            RangeMode // Range mode: closed (default), open, left_closed, right_closed
+	IsGreaterThan        bool
+	IsLessThan           bool
+	IsGreaterOrEqualThan bool
+	IsLessOrEqualThan    bool
 	IsFullTextSearch     bool
 	FullTextSearchFields []string
 }
@@ -117,8 +152,41 @@ func (w *Where) Add(key string, value interface{}, opts ...*SetWhereOptions) {
 		item.IsIn = opt.IsIn
 		item.IsNotIn = opt.IsNotIn
 		item.IsPlain = opt.IsPlain
+		item.IsRange = opt.IsRange
+		item.IsGreaterThan = opt.IsGreaterThan
+		item.IsLessThan = opt.IsLessThan
+		item.IsGreaterOrEqualThan = opt.IsGreaterOrEqualThan
+		item.IsLessOrEqualThan = opt.IsLessOrEqualThan
 		item.IsFullTextSearch = opt.IsFullTextSearch
 		item.FullTextSearchFields = opt.FullTextSearchFields
+
+		// Handle range values
+		if opt.IsRange {
+			// Set range mode (default to closed if not specified)
+			if opt.RangeMode == "" {
+				item.rangeMode = RangeModeClosed
+			} else {
+				item.rangeMode = opt.RangeMode
+			}
+
+			// Value should be an array [start, end]
+			if arr, ok := value.([]interface{}); ok && len(arr) >= 2 {
+				item.rangeStart = arr[0]
+				item.rangeEnd = arr[1]
+			} else if arr, ok := value.([]string); ok && len(arr) >= 2 {
+				item.rangeStart = arr[0]
+				item.rangeEnd = arr[1]
+			} else if arr, ok := value.([]int); ok && len(arr) >= 2 {
+				item.rangeStart = arr[0]
+				item.rangeEnd = arr[1]
+			} else if arr, ok := value.([]int64); ok && len(arr) >= 2 {
+				item.rangeStart = arr[0]
+				item.rangeEnd = arr[1]
+			} else if arr, ok := value.([]float64); ok && len(arr) >= 2 {
+				item.rangeStart = arr[0]
+				item.rangeEnd = arr[1]
+			}
+		}
 	}
 
 	w.Items = append(w.Items, item)
@@ -212,6 +280,38 @@ func (w *Where) Build() (query string, args []interface{}, err error) {
 				whereValues = append(whereValues, item.Value)
 			} else if item.IsNotIn {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s not in (?)", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.IsRange {
+				// Generate SQL based on range mode
+				switch item.rangeMode {
+				case RangeModeOpen:
+					// (A, B): field > A AND field < B
+					whereClauses = append(whereClauses, fmt.Sprintf("(%s > ? AND %s < ?)", item.Key, item.Key))
+					whereValues = append(whereValues, item.rangeStart, item.rangeEnd)
+				case RangeModeLeftClosed:
+					// [A, B): field >= A AND field < B
+					whereClauses = append(whereClauses, fmt.Sprintf("(%s >= ? AND %s < ?)", item.Key, item.Key))
+					whereValues = append(whereValues, item.rangeStart, item.rangeEnd)
+				case RangeModeRightClosed:
+					// (A, B]: field > A AND field <= B
+					whereClauses = append(whereClauses, fmt.Sprintf("(%s > ? AND %s <= ?)", item.Key, item.Key))
+					whereValues = append(whereValues, item.rangeStart, item.rangeEnd)
+				default:
+					// RangeModeClosed (default): [A, B]: field BETWEEN A AND B
+					whereClauses = append(whereClauses, fmt.Sprintf("%s BETWEEN ? AND ?", item.Key))
+					whereValues = append(whereValues, item.rangeStart, item.rangeEnd)
+				}
+			} else if item.IsGreaterThan {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s > ?", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.IsLessThan {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s < ?", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.IsGreaterOrEqualThan {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s >= ?", item.Key))
+				whereValues = append(whereValues, item.Value)
+			} else if item.IsLessOrEqualThan {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s <= ?", item.Key))
 				whereValues = append(whereValues, item.Value)
 			} else if item.IsPlain {
 				whereClauses = append(whereClauses, fmt.Sprintf("(%s)", item.Key))

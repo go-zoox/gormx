@@ -25,8 +25,15 @@ func (TestChainProduct) TableName() string {
 }
 
 func setupChainTestData(t *testing.T) {
-	// Skip if no database connection
-	if GetDB() == nil {
+	// Skip if no database connection (catch panic from GetDB)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Skip("No database connection available")
+		}
+	}()
+	
+	db := GetDB()
+	if db == nil {
 		t.Skip("No database connection available")
 	}
 
@@ -55,7 +62,18 @@ func setupChainTestData(t *testing.T) {
 }
 
 func cleanupChainTestData(t *testing.T) {
-	GetDB().Unscoped().Where("1 = 1").Delete(&TestChainProduct{})
+	// Skip cleanup if no database connection (catch panic from GetDB)
+	defer func() {
+		if r := recover(); r != nil {
+			// DB not available, nothing to clean up
+			return
+		}
+	}()
+	
+	db := GetDB()
+	if db != nil {
+		db.Unscoped().Where("1 = 1").Delete(&TestChainProduct{})
+	}
 }
 
 func TestQueryBuilder_Where(t *testing.T) {

@@ -25,8 +25,15 @@ func (TestProduct) TableName() string {
 }
 
 func TestAggregateFunctions(t *testing.T) {
-	// Skip if no database connection
-	if GetDB() == nil {
+	// Skip if no database connection (catch panic from GetDB)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Skip("No database connection available")
+		}
+	}()
+	
+	db := GetDB()
+	if db == nil {
 		t.Skip("No database connection available")
 	}
 

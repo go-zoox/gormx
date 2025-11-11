@@ -29,7 +29,8 @@ func main() {
 	// Set the database
 	gormx.SetDB(db)
 
-	fmt.Println("=== Where Generic 完整示例 ===\n")
+	fmt.Println("=== Where Generic 完整示例 ===")
+	fmt.Println()
 
 	// 1. FindOne - 使用 map[any]any
 	fmt.Println("1. FindOne with map[any]any:")
