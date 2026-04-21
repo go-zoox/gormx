@@ -3,19 +3,42 @@ package gormx
 import (
 	"fmt"
 	"strings"
-
-	"github.com/go-zoox/zoox"
 )
+
+// ParamsValue defines the minimum value abilities used by Params.
+type ParamsValue interface {
+	String() string
+	Int64() int64
+}
+
+// ParamsGetter defines a key-value getter for query/param objects.
+type ParamsGetter interface {
+	Get(key string) ParamsValue
+}
+
+// ParamsQueries defines query collection operations used by Params.
+type ParamsQueries interface {
+	Del(key string)
+	Iterator() map[string]any
+}
+
+// ParamsContext defines the minimum context abilities required by Params.
+type ParamsContext interface {
+	BindQuery(obj interface{}) error
+	Param() ParamsGetter
+	Query() ParamsGetter
+	Queries() ParamsQueries
+}
 
 // Params is the interface that wraps the basic methods.
 type Params struct {
-	ctx *zoox.Context
+	ctx ParamsContext
 	//
 	page *Page
 }
 
 // NewParams returns the params.
-func NewParams(ctx *zoox.Context) *Params {
+func NewParams(ctx ParamsContext) *Params {
 	return &Params{
 		ctx: ctx,
 	}
@@ -71,6 +94,7 @@ func (c *Params) PageSize() (uint, error) {
 // ID is the struct that wraps the basic fields.
 func (c *Params) ID() (uint, error) {
 	id := c.ctx.Param().Get("id").Int64()
+
 	if id == 0 {
 		return 0, fmt.Errorf("invalid id: %s", c.ctx.Param().Get("id").String())
 	}
@@ -159,7 +183,7 @@ func (c *Params) Where() *Where {
 				where.Set(key, vs)
 			}
 		} else {
-			where.Set(key, vs)
+			where.Set(key, value)
 		}
 	}
 
