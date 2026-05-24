@@ -3,9 +3,9 @@ package gormx
 import (
 	"fmt"
 
+	"github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
@@ -73,8 +73,10 @@ func Connect(engine string, dsn string, opts ...func(*LoadDBOptions)) (db *gorm.
 		dialector = postgres.Open(dsn)
 	case "mysql":
 		dialector = mysql.Open(dsn)
-	case "sqlite":
+	case "sqlite", "sqlite3":
 		dialector = sqlite.Open(dsn)
+	case "memory":
+		dialector = sqlite.Open(":memory:")
 	default:
 		return nil, fmt.Errorf("unknown engine: %s", engine)
 	}

@@ -31,7 +31,7 @@ func TestAggregateFunctions(t *testing.T) {
 			t.Skip("No database connection available")
 		}
 	}()
-	
+
 	db := GetDB()
 	if db == nil {
 		t.Skip("No database connection available")

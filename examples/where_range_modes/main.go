@@ -227,4 +227,3 @@ func main() {
 	fmt.Println("  // Generates: WHERE (age >= 18 AND age < 65) AND status = 'active'")
 	fmt.Println()
 }
-

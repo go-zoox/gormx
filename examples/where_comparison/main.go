@@ -220,4 +220,3 @@ func ExampleWithDB() {
 	// complexWhere.Set("category", "Electronics")
 	// result, _, err := gormx.Find[Product](1, 20, complexWhere, nil)
 }
-

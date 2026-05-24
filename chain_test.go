@@ -31,7 +31,7 @@ func setupChainTestData(t *testing.T) {
 			t.Skip("No database connection available")
 		}
 	}()
-	
+
 	db := GetDB()
 	if db == nil {
 		t.Skip("No database connection available")
@@ -69,7 +69,7 @@ func cleanupChainTestData(t *testing.T) {
 			return
 		}
 	}()
-	
+
 	db := GetDB()
 	if db != nil {
 		db.Unscoped().Where("1 = 1").Delete(&TestChainProduct{})
